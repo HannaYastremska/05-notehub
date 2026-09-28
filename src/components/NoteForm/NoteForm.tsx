@@ -1,11 +1,12 @@
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { createNote } from "../../services/noteService";
 import type { CreateNoteDto } from "../../services/noteService";
 import css from "./NoteForm.module.css";
 
 interface NoteFormProps {
-  onSubmit: (values: CreateNoteDto) => void;
-  onCancel: () => void;
+  onClose: () => void;
 }
 
 const NoteValidationSchema = Yup.object().shape({
@@ -19,7 +20,17 @@ const NoteValidationSchema = Yup.object().shape({
     .required("Tag is required"),
 });
 
-const NoteForm = ({ onSubmit, onCancel }: NoteFormProps) => {
+const NoteForm = ({ onClose }: NoteFormProps) => {
+  const queryClient = useQueryClient();
+
+  const createMutation = useMutation({
+    mutationFn: createNote,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notes"] });
+      onClose();
+    },
+  });
+
   const initialValues: CreateNoteDto = {
     title: "",
     content: "",
@@ -31,7 +42,7 @@ const NoteForm = ({ onSubmit, onCancel }: NoteFormProps) => {
       initialValues={initialValues}
       validationSchema={NoteValidationSchema}
       onSubmit={(values, { resetForm }) => {
-        onSubmit(values);
+        createMutation.mutate(values);
         resetForm();
       }}
     >
@@ -75,16 +86,16 @@ const NoteForm = ({ onSubmit, onCancel }: NoteFormProps) => {
             <button
               type="button"
               className={css.cancelButton}
-              onClick={onCancel}
+              onClick={onClose}
             >
               Cancel
             </button>
             <button
               type="submit"
               className={css.submitButton}
-              disabled={isSubmitting}
+              disabled={isSubmitting || createMutation.isPending}
             >
-              Create note
+              {createMutation.isPending ? "Creating..." : "Create note"}
             </button>
           </div>
         </Form>
