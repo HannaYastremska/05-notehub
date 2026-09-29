@@ -5,13 +5,11 @@ import css from "./Pagination.module.css";
 
 type ModuleWithDefault<T> = { default: T };
 
-const ReactPaginateRaw = (
+const ReactPaginate = (
   ReactPaginateModule as unknown as ModuleWithDefault<
     ComponentType<ReactPaginateProps>
   >
 ).default;
-
-const ReactPaginate = ReactPaginateRaw || (ReactPaginateModule as any);
 
 interface PaginationProps {
   pageCount: number;
@@ -21,8 +19,6 @@ interface PaginationProps {
 
 const Pagination = ({ pageCount, currentPage, onChange }: PaginationProps) => {
   if (pageCount <= 1) return null;
-
-  if (!ReactPaginate) return null;
 
   return (
     <ReactPaginate
